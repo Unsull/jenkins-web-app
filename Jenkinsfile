@@ -10,6 +10,9 @@ pipeline {
     environment {
         APP_NAME    = 'my-nginx-web'
         IMAGE_TAG   = "${BUILD_NUMBER}"
+
+        // 1. ดึงไฟล์ Kubeconfig จาก Jenkins Credentials
+        KUBECONFIG   = credentials('kind-kubeconfig')
     }
 
     stages {
@@ -23,6 +26,9 @@ pipeline {
             steps {
                 script {
                     sh "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
+
+                    // 2.
+                    sh "kind load docker-image ${APP_NAME}:${IMAGE_TAG} --name lab4-cluster"
                 }
             }
         }
@@ -33,6 +39,8 @@ pipeline {
                     sh "kubectl apply -f k8s/deployment.yaml"
                     sh "kubectl apply -f k8s/service.yaml"
                     sh "kubectl apply -f k8s/ingress.yaml"
+
+                    // 4. แก้ไขชื่อ Container ให้ตรงกับในไฟล์ deployment.yaml
                     sh "kubectl set image deployment/nginx-deployment nginx-container=${APP_NAME}:${IMAGE_TAG}"
                 }
             }
